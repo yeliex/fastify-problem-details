@@ -1,5 +1,9 @@
 # @yeliex/fastify-problem-details
 
+[![npm version](https://img.shields.io/npm/v/@yeliex/fastify-problem-details)](https://www.npmjs.com/package/@yeliex/fastify-problem-details)
+[![license](https://img.shields.io/github/license/yeliex/fastify-problem-details)](https://github.com/yeliex/fastify-problem-details/blob/master/LICENSE)
+[![ci test](https://img.shields.io/github/actions/workflow/status/yeliex/fastify-problem-details/test.yml?branch=master)](https://github.com/yeliex/fastify-problem-details/actions)
+
 A Fastify plugin and utility for
 handling [RFC 9457 Problem Details for HTTP APIs](https://datatracker.ietf.org/doc/html/rfc9457). Provides a standard
 way to return machine-readable error details in HTTP responses, with built-in support for common HTTP errors and easy
@@ -244,4 +248,3 @@ app.get('/', async (request, reply) => {
     }
 });
 ```
-

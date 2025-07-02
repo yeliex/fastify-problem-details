@@ -1,6 +1,6 @@
 {
   "name": "@yeliex/fastify-problem-details",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Problem Details for HTTP APIs (RFC 9457) implementation for fastify (or pure nodejs)\n",
   "type": "module",
   "main": "dist/index.js",

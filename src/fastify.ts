@@ -122,6 +122,16 @@ export function fastifyErrorHandler(
     return replyProblem(reply, problem, { responseStack });
 }
 
+export function fastifyNotFoundHandler(this: FastifyInstance, request: FastifyRequest, reply: FastifyReply) {
+    const problem = new ProblemDetail(404, `Route ${request.method}:${request.url} not found`, {
+        type: 'about:blank',
+        instance: request.url,
+        method: request.method,
+    });
+
+    return replyProblem(reply, problem);
+}
+
 export const fastifyProblemDetails = fastifyPlugin((
     fastify: FastifyInstance,
     { responseStack }: ReplyProblemOptions = {},
@@ -141,6 +151,8 @@ export const fastifyProblemDetails = fastifyPlugin((
     fastify.setErrorHandler(function (...args) {
         return fastifyErrorHandler.call(this, ...args, { responseStack });
     });
+
+    fastify.setNotFoundHandler(fastifyNotFoundHandler);
 }, {
     name: 'fastify-problem-details',
     fastify: '5.x',

@@ -169,6 +169,8 @@ createHttpError(status: number, detail?: string):typeof ProblemDetail
 
 Register the plugin to add `reply.problem()` and `httpErrors` to your Fastify instance.
 
+It will also set up a default error handler and not found handler that return Problem Details responses.
+
 ```ts
 import fastifyProblemDetails from '@yeliex/fastify-problem-details';
 
@@ -228,9 +230,21 @@ Otherwise, it will use `Content-Type: application/json`, but the response body w
 ```ts
 import { fastifyErrorHandler } from '@yeliex/fastify-problem-details';
 
+app.setErrorHandler(fastifyErrorHandler);
+
+// or response error stack
 app.setErrorHandler((error, request, reply) => {
     fastifyErrorHandler.call(app, error, request, reply, { responseStack: true });
 });
+```
+
+## fastifyNotFoundHandler
+A Fastify not found handler that returns a 404 Problem Detail response.
+
+```ts
+import { fastifyNotFoundHandler } from '@yeliex/fastify-problem-details';
+
+app.setNotFoundHandler(fastifyNotFoundHandler);
 ```
 
 ### acceptsProblemJson
@@ -248,3 +262,4 @@ app.get('/', async (request, reply) => {
     }
 });
 ```
+

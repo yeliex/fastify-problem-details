@@ -4,102 +4,12 @@ import { describe, test } from 'node:test';
 import {
     acceptsProblemJson,
     fastifyErrorHandler,
+    fastifyNotFoundHandler,
     fastifyProblemDetails,
     replyProblem,
     toProblemDetail,
 } from './fastify.js';
 import { ProblemDetail } from './problem-detail.js';
-
-describe('fastifyProblemDetails plugin', () => {
-    test('should register httpErrors and problem method', async () => {
-        const app = fastify();
-        await app.register(fastifyProblemDetails);
-
-        assert.ok(app.httpErrors);
-        assert.strictEqual(typeof app.httpErrors.NotFound, 'function');
-
-        app.get('/test', (_request, reply) => {
-            reply.problem(404, 'Not Found', { foo: 'bar' });
-        });
-
-        const res = await app.inject({
-            method: 'GET',
-            url: '/test',
-        });
-
-        assert.strictEqual(res.statusCode, 404);
-        assert.deepStrictEqual(res.json(), {
-            type: 'about:blank',
-            title: 'Not Found',
-            status: 404,
-            detail: 'Not Found',
-            foo: 'bar',
-        });
-        await app.close();
-    });
-
-    test('should handle errors using fastifyErrorHandler', async () => {
-        const app = fastify();
-        await app.register(fastifyProblemDetails);
-
-        app.get('/error', async () => {
-            throw new Error('Test error');
-        });
-
-        const res = await app.inject({
-            method: 'GET',
-            url: '/error',
-        });
-        assert.strictEqual(res.statusCode, 500);
-        assert.deepStrictEqual(res.json(), {
-            type: 'about:blank',
-            title: 'Internal Server Error',
-            status: 500,
-            detail: 'Test error',
-        });
-        await app.close();
-    });
-
-    test('should include stack when responseStack is true', async () => {
-        const app = fastify();
-        await app.register(fastifyProblemDetails, { responseStack: true });
-
-        app.get('/error', async () => {
-            throw new Error('Test error');
-        });
-
-        const res = await app.inject({
-            method: 'GET',
-            url: '/error',
-        });
-
-        const json = res.json();
-        assert.strictEqual(res.statusCode, 500);
-        assert.ok(json.stack);
-
-        await app.close();
-    });
-
-    test('should not include stack when responseStack is false', async () => {
-        const app = fastify();
-        await app.register(fastifyProblemDetails, { responseStack: false });
-
-        app.get('/error', async () => {
-            throw new Error('Test error');
-        });
-
-        const res = await app.inject({
-            method: 'GET',
-            url: '/error',
-        });
-
-        const json = res.json();
-        assert.strictEqual(res.statusCode, 500);
-        assert.strictEqual(json.stack, undefined);
-
-        await app.close();
-    });
-});
 
 describe('ProblemDetail and replyProblem', () => {
     test('should convert FastifyError to ProblemDetail', () => {
@@ -260,6 +170,30 @@ describe('fastifyErrorHandler', () => {
     });
 });
 
+describe('fastifyNotFoundHandler', () => {
+    test('should handle not found routes and return ProblemDetail', async () => {
+        const app = fastify();
+
+        app.setNotFoundHandler(fastifyNotFoundHandler);
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/non-existent-route',
+        });
+
+        assert.strictEqual(res.statusCode, 404);
+        assert.deepStrictEqual(res.json(), {
+            type: 'about:blank',
+            title: 'Not Found',
+            status: 404,
+            detail: 'Route GET:/non-existent-route not found',
+            instance: '/non-existent-route',
+            method: 'GET',
+        });
+        await app.close();
+    });
+});
+
 describe('FastifyError handling', () => {
     test('should handle FastifyError and convert it to ProblemDetail', async () => {
         const app = fastify();
@@ -357,5 +291,118 @@ describe('toProblemDetail', () => {
         const pd = toProblemDetail('Unknown error');
         assert.strictEqual(pd.status, 500);
         assert.strictEqual(pd.detail, 'Unknown error');
+    });
+});
+
+describe('fastifyProblemDetails plugin', () => {
+    test('should register httpErrors and problem method', async () => {
+        const app = fastify();
+        await app.register(fastifyProblemDetails);
+
+        assert.ok(app.httpErrors);
+        assert.strictEqual(typeof app.httpErrors.NotFound, 'function');
+
+        app.get('/test', (_request, reply) => {
+            reply.problem(404, 'Not Found', { foo: 'bar' });
+        });
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/test',
+        });
+
+        assert.strictEqual(res.statusCode, 404);
+        assert.deepStrictEqual(res.json(), {
+            type: 'about:blank',
+            title: 'Not Found',
+            status: 404,
+            detail: 'Not Found',
+            foo: 'bar',
+        });
+        await app.close();
+    });
+
+    test('should handle errors using fastifyErrorHandler', async () => {
+        const app = fastify();
+        await app.register(fastifyProblemDetails);
+
+        app.get('/error', async () => {
+            throw new Error('Test error');
+        });
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/error',
+        });
+        assert.strictEqual(res.statusCode, 500);
+        assert.deepStrictEqual(res.json(), {
+            type: 'about:blank',
+            title: 'Internal Server Error',
+            status: 500,
+            detail: 'Test error',
+        });
+        await app.close();
+    });
+
+    test('should include stack when responseStack is true', async () => {
+        const app = fastify();
+        await app.register(fastifyProblemDetails, { responseStack: true });
+
+        app.get('/error', async () => {
+            throw new Error('Test error');
+        });
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/error',
+        });
+
+        const json = res.json();
+        assert.strictEqual(res.statusCode, 500);
+        assert.ok(json.stack);
+
+        await app.close();
+    });
+
+    test('should not include stack when responseStack is false', async () => {
+        const app = fastify();
+        await app.register(fastifyProblemDetails, { responseStack: false });
+
+        app.get('/error', async () => {
+            throw new Error('Test error');
+        });
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/error',
+        });
+
+        const json = res.json();
+        assert.strictEqual(res.statusCode, 500);
+        assert.strictEqual(json.stack, undefined);
+
+        await app.close();
+    });
+
+    test('should handle not found routes using fastifyNotFoundHandler', async () => {
+        const app = fastify();
+        await app.register(fastifyProblemDetails);
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/non-existent-route',
+        });
+
+        assert.strictEqual(res.statusCode, 404);
+        assert.deepStrictEqual(res.json(), {
+            type: 'about:blank',
+            title: 'Not Found',
+            status: 404,
+            detail: 'Route GET:/non-existent-route not found',
+            instance: '/non-existent-route',
+            method: 'GET',
+        });
+
+        await app.close();
     });
 });

@@ -1,0 +1,50 @@
+name: Release
+
+on:
+    workflow_dispatch:
+    workflow_call:
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+    contents: write
+    pull-requests: write
+    actions: write
+
+jobs:
+    release:
+        name: Release
+        runs-on: ubuntu-latest
+        steps:
+            -   name: Checkout Repo
+                uses: actions/checkout@v4
+                with:
+                    ref: ${{ github.ref }}
+
+            -   name: Setup Node.js
+                uses: actions/setup-node@v4
+                with:
+                    node-version: 22
+
+            -   name: Setup pnpm
+                uses: pnpm/action-setup@v4
+
+            -   name: Install Dependencies
+                run: pnpm install
+
+            -   name: Creating .npmrc
+                run: |
+                    cat << EOF > "$HOME/.npmrc"
+                      //registry.npmjs.org/:_authToken=$NPM_TOKEN
+                    EOF
+                env:
+                    NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+            -   name: Create Release Pull Request
+                uses: changesets/action@v1
+                with:
+                    title: Version Packages for ${{ github.ref_name }}
+                    publish: pnpm publish
+                    createGithubReleases: ${{ github.ref_name == 'master' }}
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

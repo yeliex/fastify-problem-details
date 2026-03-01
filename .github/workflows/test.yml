@@ -49,6 +49,10 @@ jobs:
             -   name: Setup pnpm
                 uses: pnpm/action-setup@v4
 
+            -   name: Configure pnpm script shell (Windows)
+                if: runner.os == 'Windows'
+                run: pnpm config set scriptShell "C:\\Program Files\\git\\bin\\bash.exe"
+
             -   name: Install Dependencies
                 run: pnpm install
 

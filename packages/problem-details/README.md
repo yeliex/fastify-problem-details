@@ -28,18 +28,10 @@ class ProblemDetail extends Error {
   - `cause`
   - any custom extension members (for example `traceId`, `code`, `foo`)
 
-### `toProblemDetail(error: unknown): ProblemDetail`
-
-Normalize unknown values into `ProblemDetail`:
-
-- returns original value when input already is `ProblemDetail`
-- converts `Error` and preserves `statusCode`, `message`, `cause`, `stack`, and extra enumerable fields
-- converts non-Error values to `500` ProblemDetail
-
 ## Usage
 
 ```ts
-import { ProblemDetail, toProblemDetail } from '@yeliex/problem-details';
+import { ProblemDetail } from '@yeliex/problem-details';
 
 const problem = new ProblemDetail(404, 'User not found', {
   type: 'https://example.com/problems/user-not-found',
@@ -48,9 +40,18 @@ const problem = new ProblemDetail(404, 'User not found', {
 });
 
 console.log(problem.toJSON());
+```
 
-const normalized = toProblemDetail(new Error('Unexpected failure'));
-console.log(normalized.status); // 500
+## HTTP Error Constructors
+
+`http-error` is provided as a subpath export (not from root entry):
+
+```ts
+import { httpErrors } from '@yeliex/problem-details/http-error';
+
+throw new httpErrors.NotFound('User not found');
+throw new httpErrors[404]('User not found');
+throw new httpErrors['404']('User not found');
 ```
 
 ## JSON Output

@@ -21,6 +21,11 @@
       "require": "./dist/index.cjs",
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./http-error": {
+      "require": "./dist/http-error.cjs",
+      "import": "./dist/http-error.js",
+      "types": "./dist/http-error.d.ts"
     }
   },
   "keywords": [

@@ -2,7 +2,7 @@ import fastify from 'fastify';
 import assert from 'node:assert';
 import { STATUS_CODES } from 'node:http';
 import { describe, test } from 'node:test';
-import { createError, createHttpError, httpErrorNames, httpErrors } from './http-errors.js';
+import { createError, createHttpError, httpErrorNames, httpErrors } from '@yeliex/problem-details/http-error';
 
 describe('createError', () => {
     test('should extend ProblemDetail and assign properties', () => {

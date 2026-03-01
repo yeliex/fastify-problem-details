@@ -1,5 +1,5 @@
 import { STATUS_CODES } from 'node:http';
-import { ProblemDetail as ProblemDetailClass, type ProblemDetailInit } from '@yeliex/problem-details';
+import { ProblemDetail as ProblemDetailClass, type ProblemDetailInit } from './problem-detail.js';
 
 export const httpErrorNames = {
     400: 'BadRequest',

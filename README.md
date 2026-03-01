@@ -43,7 +43,7 @@ This repo uses [Changesets](https://github.com/changesets/changesets).
 pnpm changeset
 ```
 
-Then merge to release branch and let CI publish.
+Then merge to master branch and let CI publish.
 
 ## License
 

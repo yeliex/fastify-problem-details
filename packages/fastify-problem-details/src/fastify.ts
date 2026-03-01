@@ -1,9 +1,9 @@
+import { ProblemDetail, type ProblemDetailInit } from '@yeliex/problem-details';
 import accepts from 'accepts';
 import { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 import { fastifyPlugin } from 'fastify-plugin';
 import { STATUS_CODES } from 'node:http';
-import { ProblemDetail, type ProblemDetailInit } from '@yeliex/problem-details';
-import { httpErrors } from './http-errors.js';
+import { httpErrors } from '@yeliex/problem-details/http-error';
 
 const acceptSymbol = Symbol.for('accept-problem-json');
 

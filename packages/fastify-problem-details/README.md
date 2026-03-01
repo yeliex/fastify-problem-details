@@ -54,7 +54,7 @@ Behavior:
 
 ## `httpErrors`
 
-Built-in typed HTTP error constructors.
+Built-in typed HTTP error constructors (re-exported from `@yeliex/problem-details/http-error`).
 
 All access patterns are supported:
 
@@ -75,7 +75,8 @@ Each constructor extends `ProblemDetail` and supports the same options/extension
 - `Error` with empty `message` falls back to status phrase (for example `404 -> Not Found`)
 - preserves `statusCode`, `cause`, `stack`, and extra fields
 
-If you need framework-agnostic conversion, use `toProblemDetail` from `@yeliex/problem-details`.
+If you are not using Fastify, create a conversion function in your own application
+that maps your runtime errors to `new ProblemDetail(...)`.
 
 ## License
 

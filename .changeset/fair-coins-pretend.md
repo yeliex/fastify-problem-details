@@ -1,3 +1,4 @@
+---
 "@yeliex/fastify-problem-details": patch
 "@yeliex/problem-details": patch
 ---

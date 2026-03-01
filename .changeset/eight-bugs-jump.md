@@ -1,3 +1,4 @@
+---
 "@yeliex/fastify-problem-details": minor
 "@yeliex/problem-details": minor
 ---

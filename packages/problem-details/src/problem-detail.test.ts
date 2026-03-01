@@ -1,6 +1,5 @@
 import assert from 'node:assert';
 import { describe, test } from 'node:test';
-import fastify from 'fastify';
 import { ProblemDetail } from './problem-detail.js';
 
 describe('ProblemDetail', () => {
@@ -59,19 +58,6 @@ describe('ProblemDetail', () => {
         assert.strictEqual(json.cause, 123);
     });
 
-    test('should work with Fastify integration', async () => {
-        const app = fastify();
-        app.get('/pd', (_req, reply) => {
-            const pd = new ProblemDetail(418, 'I am a teapot', { foo: 'bar' });
-            reply.code(418).send(pd.toJSON());
-        });
-        const res = await app.inject({ method: 'GET', url: '/pd' });
-        const body = res.json();
-        assert.strictEqual(res.statusCode, 418);
-        assert.strictEqual(body.detail, 'I am a teapot');
-        assert.strictEqual(body.foo, 'bar');
-        await app.close();
-    });
 });
 
 describe('ProblemDetail edge cases', () => {

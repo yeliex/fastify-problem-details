@@ -1,5 +1,5 @@
 import { STATUS_CODES } from 'node:http';
-import { ProblemDetail as ProblemDetailClass, type ProblemDetailInit } from './problem-detail.js';
+import { ProblemDetail as ProblemDetailClass, type ProblemDetailInit } from '@yeliex/problem-details';
 
 export const httpErrorNames = {
     400: 'BadRequest',
@@ -70,11 +70,27 @@ export const createHttpError = (status: keyof typeof httpErrorNames, detail?: st
     return createError(status, name, detail);
 };
 
-export const httpErrors = Object.fromEntries(
-    Object.keys(httpErrorNames).map((status) => [
-        httpErrorNames[+status as keyof typeof httpErrorNames],
-        createHttpError(+status as keyof typeof httpErrorNames, STATUS_CODES[status]),
-    ]),
-) as {
-    [status in typeof httpErrorNames[keyof typeof httpErrorNames]]: ReturnType<typeof createHttpError>;
+type HttpErrorStatusCode = keyof typeof httpErrorNames;
+type HttpErrorName = (typeof httpErrorNames)[HttpErrorStatusCode];
+type HttpErrorConstructor = ReturnType<typeof createHttpError>;
+
+export type HttpErrors = {
+    [status in HttpErrorStatusCode]: HttpErrorConstructor;
+} & {
+    [status in `${HttpErrorStatusCode}`]: HttpErrorConstructor;
+} & {
+    [name in HttpErrorName]: HttpErrorConstructor;
 };
+
+export const httpErrors = (Object.keys(httpErrorNames) as Array<`${HttpErrorStatusCode}`>)
+    .reduce((result, statusCode) => {
+        const status = Number(statusCode) as HttpErrorStatusCode;
+        const name = httpErrorNames[status];
+        const ErrorClass = createHttpError(status, STATUS_CODES[status]);
+
+        result[name] = ErrorClass;
+        result[status] = ErrorClass;
+        result[statusCode] = ErrorClass;
+
+        return result;
+    }, {} as Record<string, HttpErrorConstructor>) as HttpErrors;

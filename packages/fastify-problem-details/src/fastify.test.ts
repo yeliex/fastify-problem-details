@@ -9,7 +9,7 @@ import {
     replyProblem,
     toProblemDetail,
 } from './fastify.js';
-import { ProblemDetail } from './problem-detail.js';
+import { ProblemDetail } from '@yeliex/problem-details';
 
 describe('ProblemDetail and replyProblem', () => {
     test('should convert FastifyError to ProblemDetail', () => {
@@ -110,7 +110,7 @@ describe('fastifyErrorHandler', () => {
     test('should handle errors and call reply.problem', async () => {
         const app = fastify();
 
-        app.setErrorHandler((error, request, reply) => {
+        app.setErrorHandler((error: Error, request, reply) => {
             fastifyErrorHandler.call(app, error, request, reply);
         });
 
@@ -198,7 +198,7 @@ describe('FastifyError handling', () => {
     test('should handle FastifyError and convert it to ProblemDetail', async () => {
         const app = fastify();
 
-        app.setErrorHandler((error, request, reply) => {
+        app.setErrorHandler((error: Error, request, reply) => {
             fastifyErrorHandler.call(app, error, request, reply);
         });
 
@@ -211,7 +211,6 @@ describe('FastifyError handling', () => {
             method: 'GET',
             url: '/fastify-error',
         });
-        console.log('res', res.json());
         assert.strictEqual(res.statusCode, 404);
         assert.deepStrictEqual(res.json(), {
             type: 'about:blank',
@@ -226,7 +225,7 @@ describe('FastifyError handling', () => {
     test('should handle FST_ERR_VALIDATION error and convert it to ProblemDetail', async () => {
         const app = fastify();
 
-        app.setErrorHandler((error, request, reply) => {
+        app.setErrorHandler((error: Error, request, reply) => {
             fastifyErrorHandler.call(app, error, request, reply);
         });
 

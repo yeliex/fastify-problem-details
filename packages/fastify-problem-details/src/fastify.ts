@@ -2,8 +2,8 @@ import accepts from 'accepts';
 import { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 import { fastifyPlugin } from 'fastify-plugin';
 import { STATUS_CODES } from 'node:http';
+import { ProblemDetail, type ProblemDetailInit } from '@yeliex/problem-details';
 import { httpErrors } from './http-errors.js';
-import { ProblemDetail, type ProblemDetailInit } from './problem-detail.js';
 
 const acceptSymbol = Symbol.for('accept-problem-json');
 
@@ -148,8 +148,8 @@ export const fastifyProblemDetails = fastifyPlugin((
         return replyProblem(this, ...args);
     });
 
-    fastify.setErrorHandler(function (...args) {
-        return fastifyErrorHandler.call(this, ...args, { responseStack });
+    fastify.setErrorHandler(function (error, request, reply) {
+        return fastifyErrorHandler.call(this, error as Error, request, reply, { responseStack });
     });
 
     fastify.setNotFoundHandler(fastifyNotFoundHandler);

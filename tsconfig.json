@@ -1,13 +1,7 @@
 {
-  "extends": ["@tsconfig/strictest", "@tsconfig/node20"],
-  "compileOnSave": false,
-  "compilerOptions": {
-    "verbatimModuleSyntax": true,
-    "useDefineForClassFields": true,
-    "noPropertyAccessFromIndexSignature": false,
-    "exactOptionalPropertyTypes": false
-  },
-  "include": [
-    "src/**/*.ts"
+  "files": [],
+  "references": [
+    { "path": "./packages/problem-details" },
+    { "path": "./packages/fastify-problem-details" }
   ]
 }

@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "noEmit": false,
+    "tsBuildInfoFile": "node_modules/.cache/tsconfig.tsbuildinfo",
+    "baseUrl": "./",
+    "paths": {
+      "@yeliex/problem-details": ["../problem-details/src"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

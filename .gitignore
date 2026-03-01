@@ -18,3 +18,5 @@ dist
 *.local.*
 .db-client
 .generated
+
+*.tsbuildinfo

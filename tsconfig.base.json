@@ -1,5 +1,6 @@
 {
   "extends": ["@tsconfig/strictest", "@tsconfig/node24", "@yeliex/tsconfig"],
   "compilerOptions": {
+    "emitDeclarationOnly": true
   }
 }

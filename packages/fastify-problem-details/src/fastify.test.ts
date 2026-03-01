@@ -34,6 +34,14 @@ describe('ProblemDetail and replyProblem', () => {
         assert.strictEqual(pd.detail, 'err');
     });
 
+    test('should use status default detail for Error with empty message', () => {
+        const err = new Error('');
+        Object.assign(err, { statusCode: 404 });
+        const pd = toProblemDetail(err);
+        assert.strictEqual(pd.status, 404);
+        assert.strictEqual(pd.detail, 'Not Found');
+    });
+
     test('should convert other types to ProblemDetail', () => {
         const pd = toProblemDetail('abc');
         assert.strictEqual(pd.status, 500);

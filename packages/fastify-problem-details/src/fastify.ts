@@ -87,21 +87,18 @@ export const toProblemDetail = (error: unknown): ProblemDetail => {
     }
 
     if (error instanceof Error) {
-        // 直接用对象展开+排除标准字段
-        const { statusCode, message, ...extra } = error as any;
-
+        const { statusCode, message, ...extra } = error as Error & {
+            statusCode?: unknown;
+            [key: string]: unknown;
+        };
         const status = typeof statusCode === 'number' ? statusCode : 500;
 
-        return new ProblemDetail(
-            status,
-            message || STATUS_CODES[status],
-            {
-                type: 'about:blank',
-                ...extra,
-                stack: error.stack,
-                cause: error.cause,
-            },
-        );
+        return new ProblemDetail(status, message || STATUS_CODES[status] || 'Unknown Error', {
+            type: 'about:blank',
+            ...extra,
+            stack: error.stack,
+            cause: error.cause,
+        });
     }
 
     return new ProblemDetail(500, String(error), {

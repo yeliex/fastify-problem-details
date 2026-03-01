@@ -3,11 +3,13 @@
   "compilerOptions": {
     "composite": true,
     "noEmit": false,
+    "outDir": "node_modules/.cache",
     "tsBuildInfoFile": "node_modules/.cache/tsconfig.tsbuildinfo",
     "baseUrl": "./",
     "paths": {
-      "@yeliex/problem-details": ["../problem-details/src"]
+      "@yeliex/problem-details": ["../problem-details/src/index.ts"]
     }
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts"],
+  "references": [{"path": "../problem-details"}]
 }

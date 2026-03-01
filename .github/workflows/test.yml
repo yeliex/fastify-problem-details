@@ -10,6 +10,9 @@ jobs:
     test:
         name: ${{ matrix.os }}/${{ matrix.arch }} Node ${{ matrix.node }}
         runs-on: ${{ matrix.os }}
+        defaults:
+            run:
+                shell: bash
         strategy:
             fail-fast: false
             matrix:
@@ -24,13 +27,13 @@ jobs:
                 include:
                     -   os: windows-latest
                         arch: x64
-                        node: 22
+                        node: 24
                     -   os: ubuntu-latest
                         arch: arm64
-                        node: 22
+                        node: 24
                     -   os: macos-latest
                         arch: x64
-                        node: 22
+                        node: 24
         concurrency:
             group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.node }}
             cancel-in-progress: true
@@ -46,20 +49,12 @@ jobs:
             -   name: Setup pnpm
                 uses: pnpm/action-setup@v4
 
+            -   name: Configure pnpm script shell (Windows)
+                if: runner.os == 'Windows'
+                run: pnpm config set scriptShell "C:\\Program Files\\git\\bin\\bash.exe"
+
             -   name: Install Dependencies
                 run: pnpm install
 
             -   name: Test
                 run: pnpm test
-
-    release:
-        name: Trigger Release
-        needs:
-            - test
-        if: github.ref == 'refs/heads/master'
-        uses: ./.github/workflows/release.yml
-        permissions:
-            contents: write
-            pull-requests: write
-            actions: write
-        secrets: inherit

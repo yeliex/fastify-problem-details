@@ -9,7 +9,7 @@ import {
     replyProblem,
     toProblemDetail,
 } from './fastify.js';
-import { ProblemDetail } from './problem-detail.js';
+import { ProblemDetail } from '@yeliex/problem-details';
 
 describe('ProblemDetail and replyProblem', () => {
     test('should convert FastifyError to ProblemDetail', () => {
@@ -32,6 +32,14 @@ describe('ProblemDetail and replyProblem', () => {
         const pd = toProblemDetail(err);
         assert.strictEqual(pd.status, 500);
         assert.strictEqual(pd.detail, 'err');
+    });
+
+    test('should use status default detail for Error with empty message', () => {
+        const err = new Error('');
+        Object.assign(err, { statusCode: 404 });
+        const pd = toProblemDetail(err);
+        assert.strictEqual(pd.status, 404);
+        assert.strictEqual(pd.detail, 'Not Found');
     });
 
     test('should convert other types to ProblemDetail', () => {
@@ -110,7 +118,7 @@ describe('fastifyErrorHandler', () => {
     test('should handle errors and call reply.problem', async () => {
         const app = fastify();
 
-        app.setErrorHandler((error, request, reply) => {
+        app.setErrorHandler((error: Error, request, reply) => {
             fastifyErrorHandler.call(app, error, request, reply);
         });
 
@@ -198,7 +206,7 @@ describe('FastifyError handling', () => {
     test('should handle FastifyError and convert it to ProblemDetail', async () => {
         const app = fastify();
 
-        app.setErrorHandler((error, request, reply) => {
+        app.setErrorHandler((error: Error, request, reply) => {
             fastifyErrorHandler.call(app, error, request, reply);
         });
 
@@ -211,7 +219,6 @@ describe('FastifyError handling', () => {
             method: 'GET',
             url: '/fastify-error',
         });
-        console.log('res', res.json());
         assert.strictEqual(res.statusCode, 404);
         assert.deepStrictEqual(res.json(), {
             type: 'about:blank',
@@ -226,7 +233,7 @@ describe('FastifyError handling', () => {
     test('should handle FST_ERR_VALIDATION error and convert it to ProblemDetail', async () => {
         const app = fastify();
 
-        app.setErrorHandler((error, request, reply) => {
+        app.setErrorHandler((error: Error, request, reply) => {
             fastifyErrorHandler.call(app, error, request, reply);
         });
 

@@ -2,8 +2,8 @@ import accepts from 'accepts';
 import { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 import { fastifyPlugin } from 'fastify-plugin';
 import { STATUS_CODES } from 'node:http';
+import { ProblemDetail, type ProblemDetailInit } from '@yeliex/problem-details';
 import { httpErrors } from './http-errors.js';
-import { ProblemDetail, type ProblemDetailInit } from './problem-detail.js';
 
 const acceptSymbol = Symbol.for('accept-problem-json');
 
@@ -87,21 +87,18 @@ export const toProblemDetail = (error: unknown): ProblemDetail => {
     }
 
     if (error instanceof Error) {
-        // 直接用对象展开+排除标准字段
-        const { statusCode, message, ...extra } = error as any;
-
+        const { statusCode, message, ...extra } = error as Error & {
+            statusCode?: unknown;
+            [key: string]: unknown;
+        };
         const status = typeof statusCode === 'number' ? statusCode : 500;
 
-        return new ProblemDetail(
-            status,
-            message || STATUS_CODES[status],
-            {
-                type: 'about:blank',
-                ...extra,
-                stack: error.stack,
-                cause: error.cause,
-            },
-        );
+        return new ProblemDetail(status, message || STATUS_CODES[status] || 'Unknown Error', {
+            type: 'about:blank',
+            ...extra,
+            stack: error.stack,
+            cause: error.cause,
+        });
     }
 
     return new ProblemDetail(500, String(error), {
@@ -148,8 +145,8 @@ export const fastifyProblemDetails = fastifyPlugin((
         return replyProblem(this, ...args);
     });
 
-    fastify.setErrorHandler(function (...args) {
-        return fastifyErrorHandler.call(this, ...args, { responseStack });
+    fastify.setErrorHandler(function (error, request, reply) {
+        return fastifyErrorHandler.call(this, error as Error, request, reply, { responseStack });
     });
 
     fastify.setNotFoundHandler(fastifyNotFoundHandler);

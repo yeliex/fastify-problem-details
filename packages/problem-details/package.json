@@ -1,0 +1,35 @@
+{
+  "name": "@yeliex/problem-details",
+  "version": "1.0.0",
+  "description": "Problem Details for HTTP APIs (RFC 9457) core implementation",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "pkgroll --clean",
+    "prepublishOnly": "pnpm run build"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "keywords": [
+    "problem",
+    "problem-details",
+    "rfc9457",
+    "rfc7807"
+  ],
+  "author": "yeliex <yeliex@yeliex.com>",
+  "homepage": "https://github.com/yeliex/fastify-problem-details",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

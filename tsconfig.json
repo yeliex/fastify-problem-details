@@ -1,13 +1,18 @@
 {
-  "extends": ["@tsconfig/strictest", "@tsconfig/node20"],
-  "compileOnSave": false,
+  "files": [],
   "compilerOptions": {
-    "verbatimModuleSyntax": true,
-    "useDefineForClassFields": true,
-    "noPropertyAccessFromIndexSignature": false,
-    "exactOptionalPropertyTypes": false
+    "baseUrl": ".",
+    "paths": {
+      "@yeliex/problem-details": [
+        "packages/problem-details/src/index.ts"
+      ],
+      "@yeliex/fastify-problem-details": [
+        "packages/fastify-problem-details/src/index.ts"
+      ]
+    }
   },
-  "include": [
-    "src/**/*.ts"
+  "references": [
+    { "path": "./packages/problem-details" },
+    { "path": "./packages/fastify-problem-details" }
   ]
 }

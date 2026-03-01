@@ -62,6 +62,10 @@ describe('httpErrors', () => {
         assert.ok(httpErrors.NotFound);
         assert.ok(httpErrors.BadRequest);
         assert.ok(httpErrors.InternalServerError);
+        assert.ok(httpErrors[404]);
+        assert.ok(httpErrors['404']);
+        assert.strictEqual(httpErrors.NotFound, httpErrors[404]);
+        assert.strictEqual(httpErrors.NotFound, httpErrors['404']);
         const err = new httpErrors.NotFound('not found');
         assert.strictEqual(err.status, 404);
         assert.strictEqual(err.name, 'NotFound');
@@ -90,10 +94,14 @@ describe('httpErrors', () => {
 
         const ErrorName = httpErrorNames[status as keyof typeof httpErrorNames];
         const ErrorClass = httpErrors[ErrorName];
+        const ErrorClassByStatus = httpErrors[status as keyof typeof httpErrorNames];
+        const ErrorClassByStatusString = httpErrors[String(status) as `${keyof typeof httpErrorNames}`];
 
         test(`should create ${statusCode} ${ErrorName} error`, () => {
             assert.ok(ErrorName, `Error name for ${status} not found`);
             assert.ok(ErrorClass, `Error class for ${status} not found`);
+            assert.strictEqual(ErrorClassByStatus, ErrorClass);
+            assert.strictEqual(ErrorClassByStatusString, ErrorClass);
 
             const err = new ErrorClass('Test detail', { extra: 'info' });
             assert.strictEqual(err.status, status);

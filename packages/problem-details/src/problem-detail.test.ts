@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import { describe, test } from 'node:test';
-import fastify from 'fastify';
 import { ProblemDetail } from './problem-detail.js';
+import { toProblemDetail } from './to-problem-detail.js';
 
 describe('ProblemDetail', () => {
     test('should assign all properties from constructor', () => {
@@ -59,19 +59,6 @@ describe('ProblemDetail', () => {
         assert.strictEqual(json.cause, 123);
     });
 
-    test('should work with Fastify integration', async () => {
-        const app = fastify();
-        app.get('/pd', (_req, reply) => {
-            const pd = new ProblemDetail(418, 'I am a teapot', { foo: 'bar' });
-            reply.code(418).send(pd.toJSON());
-        });
-        const res = await app.inject({ method: 'GET', url: '/pd' });
-        const body = res.json();
-        assert.strictEqual(res.statusCode, 418);
-        assert.strictEqual(body.detail, 'I am a teapot');
-        assert.strictEqual(body.foo, 'bar');
-        await app.close();
-    });
 });
 
 describe('ProblemDetail edge cases', () => {
@@ -104,5 +91,39 @@ describe('ProblemDetail edge cases', () => {
         const json = pd.toJSON();
         assert.ok(!('detail' in json));
         assert.ok(!('instance' in json));
+    });
+});
+
+describe('toProblemDetail', () => {
+    test('should return the same instance for ProblemDetail', () => {
+        const source = new ProblemDetail(418, 'I am a teapot');
+        const result = toProblemDetail(source);
+        assert.strictEqual(result, source);
+    });
+
+    test('should convert Error to ProblemDetail', () => {
+        const error = new Error('Test error');
+        Object.assign(error, { statusCode: 422, extraField: 'extraValue' });
+        const pd = toProblemDetail(error);
+
+        assert.strictEqual(pd.status, 422);
+        assert.strictEqual(pd.detail, 'Test error');
+        assert.strictEqual(pd.extraField, 'extraValue');
+    });
+
+    test('should not inject status default detail when Error message is empty', () => {
+        const error = new Error('');
+        Object.assign(error, { statusCode: 404 });
+        const pd = toProblemDetail(error);
+
+        assert.strictEqual(pd.status, 404);
+        assert.strictEqual(pd.detail, undefined);
+    });
+
+    test('should convert unknown values to ProblemDetail', () => {
+        const pd = toProblemDetail('Unknown error');
+        assert.strictEqual(pd.status, 500);
+        assert.strictEqual(pd.detail, 'Unknown error');
+        assert.strictEqual(pd.cause, 'Unknown error');
     });
 });

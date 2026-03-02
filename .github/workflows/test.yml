@@ -16,24 +16,26 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                os: [ ubuntu-latest, macos-latest ]
-                node: [ 20, 22, 24 ]
-                arch: [ x64, arm64 ]
-                exclude:
+                include:
+                    -   os: ubuntu-latest
+                        arch: x64
+                        node: 20
+                    -   os: ubuntu-latest
+                        arch: x64
+                        node: 22
+                    -   os: ubuntu-latest
+                        arch: x64
+                        node: 24
                     -   os: ubuntu-latest
                         arch: arm64
+                        node: 24
                     -   os: macos-latest
-                        arch: x64
-                include:
+                        arch: arm64
+                        node: 24
                     -   os: windows-latest
                         arch: x64
                         node: 24
-                    -   os: ubuntu-latest
-                        arch: arm64
-                        node: 24
-                    -   os: macos-latest
-                        arch: x64
-                        node: 24
+
         concurrency:
             group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.node }}
             cancel-in-progress: true

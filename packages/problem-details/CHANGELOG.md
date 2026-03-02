@@ -1,5 +1,11 @@
 # @yeliex/problem-details
 
+## 1.3.0
+
+### Minor Changes
+
+- bfd25ca: feat: enhance ProblemDetail with custom toString and inspect behavior
+
 ## 1.2.0
 
 ### Minor Changes

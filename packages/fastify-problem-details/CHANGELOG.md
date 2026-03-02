@@ -1,5 +1,17 @@
 # @yeliex/fastify-problem-details
 
+## 1.3.0
+
+### Minor Changes
+
+- bfd25ca: feat: enhance ProblemDetail with custom toString and inspect behavior
+
+### Patch Changes
+
+- bfd25ca: chore: update build script to use custom TypeScript configuration and add tsconfig.build.json
+- Updated dependencies [bfd25ca]
+  - @yeliex/problem-details@1.3.0
+
 ## 1.2.0
 
 ### Minor Changes

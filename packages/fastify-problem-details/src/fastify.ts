@@ -1,9 +1,9 @@
 import { ProblemDetail, type ProblemDetailInit } from '@yeliex/problem-details';
+import { httpErrors } from '@yeliex/problem-details/http-error';
 import accepts from 'accepts';
-import { type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
+import { type FastifyInstance, type FastifyPluginCallback, type FastifyReply, type FastifyRequest } from 'fastify';
 import { fastifyPlugin } from 'fastify-plugin';
 import { STATUS_CODES } from 'node:http';
-import { httpErrors } from '@yeliex/problem-details/http-error';
 
 const acceptSymbol = Symbol.for('accept-problem-json');
 
@@ -129,7 +129,7 @@ export function fastifyNotFoundHandler(this: FastifyInstance, request: FastifyRe
     return replyProblem(reply, problem);
 }
 
-export const fastifyProblemDetails = fastifyPlugin((
+export const fastifyProblemDetails: FastifyPluginCallback<ReplyProblemOptions> = fastifyPlugin((
     fastify: FastifyInstance,
     { responseStack }: ReplyProblemOptions = {},
 ) => {

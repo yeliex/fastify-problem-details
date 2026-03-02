@@ -46,11 +46,27 @@ export class ProblemDetail extends Error implements ProblemDetailJSON, ProblemDe
         this.title = options?.title || STATUS_CODES[status] || 'Unknown Error';
         this.instance = options?.instance;
 
-        for (const key of Object.keys(options || {})) {
-            if (!['type', 'title', 'status', 'detail', 'instance', 'cause'].includes(key)) {
-                this[key] = options![key];
+        if (options) {
+            for (const key of Object.keys(options || {})) {
+                if (!['type', 'title', 'status', 'detail', 'instance', 'cause'].includes(key)
+                    && options[key] !== undefined) {
+                    this[key] = options![key];
+                }
             }
         }
+    }
+
+    override toString(): string {
+        const stack = this.stack ? this.stack.split('\n').slice(1).join('\n') : undefined;
+        const extra = Object.entries(this.toJSON()).map(([key, value]) => {
+            return `  ${key}: ${value && typeof value === 'object' && 'toString' in value ? value.toString() : value}`;
+        }).join('\n');
+
+        return [`${this.name}: ${this.message}`, extra, stack].filter(Boolean).join('\n');
+    }
+
+    [Symbol.for('nodejs.util.inspect.custom')]() {
+        return this.toString();
     }
 
     toJSON() {

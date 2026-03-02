@@ -1,5 +1,6 @@
 import assert from 'node:assert';
 import { describe, test } from 'node:test';
+import { inspect } from 'node:util';
 import { ProblemDetail } from './problem-detail.js';
 
 describe('ProblemDetail', () => {
@@ -56,6 +57,32 @@ describe('ProblemDetail', () => {
         const pd = new ProblemDetail(500, 'err', { cause: 123 });
         const json = pd.toJSON();
         assert.strictEqual(json.cause, 123);
+    });
+
+    test('toString should include problem fields', () => {
+        const pd = new ProblemDetail(500, 'Server error', { traceId: 'req-1' });
+        const result = pd.toString();
+
+        assert.match(result, /ProblemDetail: Server error/);
+        assert.match(result, /status: 500/);
+        assert.match(result, /traceId: req-1/);
+    });
+
+    test('inspect should reuse custom toString output', () => {
+        const pd = new ProblemDetail(400, 'Bad Request', { field: 'name' });
+
+        assert.strictEqual(inspect(pd), pd.toString());
+    });
+
+    test('should skip undefined custom fields', () => {
+        const pd = new ProblemDetail(400, 'Bad Request', {
+            field: undefined,
+            reason: 'missing',
+        });
+
+        assert.strictEqual(pd.field, undefined);
+        assert.ok(!('field' in pd.toJSON()));
+        assert.strictEqual(pd.toJSON().reason, 'missing');
     });
 
 });

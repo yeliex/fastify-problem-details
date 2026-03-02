@@ -27,6 +27,7 @@ class ProblemDetail extends Error {
   - `instance`
   - `cause`
   - any custom extension members (for example `traceId`, `code`, `foo`)
+  - extension members with `undefined` value are ignored in instance assignment
 
 ## Usage
 
@@ -41,6 +42,11 @@ const problem = new ProblemDetail(404, 'User not found', {
 
 console.log(problem.toJSON());
 ```
+
+### Debug Output
+
+`ProblemDetail` provides custom `toString()` and Node.js `inspect` output,
+which is useful in logs and debugging.
 
 ## HTTP Error Constructors
 

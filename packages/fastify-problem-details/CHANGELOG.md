@@ -1,5 +1,22 @@
 # @yeliex/fastify-problem-details
 
+## 1.4.0
+
+### Minor Changes
+
+- df47441: Add secure response filtering support with private symbol metadata.
+
+  - add `responseFilter` coverage and examples for Fastify plugin usage
+  - allow `ProblemDetail` to carry `symbol` extension fields
+  - pass symbol-based private fields into `responseFilter` input while keeping `toJSON()` output clean
+  - document `PROBLEM_PRIVATE = Symbol.for('private')` pattern for attaching internal context (e.g. traceId)
+
+### Patch Changes
+
+- 389480b: chore: update build script to use custom TypeScript configuration and add tsconfig.build.json
+- Updated dependencies [df47441]
+  - @yeliex/problem-details@1.4.0
+
 ## 1.3.0
 
 ### Minor Changes

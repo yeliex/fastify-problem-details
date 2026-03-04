@@ -4,8 +4,13 @@ import accepts from 'accepts';
 import { type FastifyInstance, type FastifyPluginCallback, type FastifyReply, type FastifyRequest } from 'fastify';
 import { fastifyPlugin } from 'fastify-plugin';
 import { STATUS_CODES } from 'node:http';
+import { createRequire } from 'node:module';
 
 const acceptSymbol = Symbol.for('accept-problem-json');
+const require = createRequire(import.meta.url);
+const { kDisableRequestLogging } = require('fastify/lib/symbols.js') as {
+    kDisableRequestLogging: symbol;
+};
 
 declare module 'fastify' {
     interface FastifyInstance {
@@ -68,6 +73,14 @@ export const replyProblem: ReplyProblem = function (reply, ...args: any[]) {
 
     const problem = args[0] instanceof ProblemDetail ? args[0] : new ProblemDetail(args[0], args[1], args[2]);
 
+    if (!(reply.log as any)[kDisableRequestLogging]) {
+        if (problem.status < 500) {
+            reply.log.info({ res: reply, err: problem }, problem.message);
+        } else {
+            reply.log.error({ req: reply.request, res: reply, err: problem }, problem.message);
+        }
+    }
+
     if (acceptsProblemJson(reply.request)) {
         reply.type('application/problem+json');
     } else {
@@ -98,13 +111,21 @@ export const toProblemDetail = (error: unknown): ProblemDetail => {
     }
 
     if (error instanceof Error) {
-        const { statusCode, message, ...extra } = error as Error & {
+        const { status, statusCode, message, ...extra } = error as Error & {
+            status?: unknown;
             statusCode?: unknown;
             [key: string]: unknown;
         };
-        const status = typeof statusCode === 'number' ? statusCode : 500;
 
-        return new ProblemDetail(status, message || STATUS_CODES[status] || 'Unknown Error', {
+        // align with https://github.com/fastify/fastify/blob/bbdfe82ae891199ba0d2b49326b7ddce5f103ab3/lib/error-handler.js#L157-L166
+        const resolvedStatus =
+            typeof status === 'number' && status >= 400
+                ? status
+                : typeof statusCode === 'number' && statusCode >= 400
+                    ? statusCode
+                    : 500;
+
+        return new ProblemDetail(resolvedStatus, message || STATUS_CODES[resolvedStatus] || 'Unknown Error', {
             type: 'about:blank',
             ...extra,
             stack: error.stack,
@@ -118,6 +139,13 @@ export const toProblemDetail = (error: unknown): ProblemDetail => {
     });
 };
 
+/**
+ * Align with Fastify defaultErrorHandler:
+ * 1. resolve status from reply/error state
+ * 2. log by status class.
+ *
+ * @see https://github.com/fastify/fastify/blob/bbdfe82ae891199ba0d2b49326b7ddce5f103ab3/lib/error-handler.js#L82C17-L99
+ */
 export function fastifyErrorHandler(
     this: FastifyInstance,
     error: Error,
@@ -127,7 +155,18 @@ export function fastifyErrorHandler(
 ) {
     const problem = toProblemDetail(error);
 
-    return replyProblem(reply, problem, options);
+    if (!(error instanceof ProblemDetail)) {
+        const statusCode = reply.raw.statusCode >= 400 ? reply.raw.statusCode : problem.status;
+        problem.status = statusCode;
+        problem.title = STATUS_CODES[statusCode] || problem.title;
+    }
+
+    // Align with Fastify defaultErrorHandler:
+    if ('headers' in error && error.headers) {
+        reply.headers(error.headers);
+    }
+
+    return replyProblem(reply, problem, { ...options });
 }
 
 export function fastifyNotFoundHandler(this: FastifyInstance, request: FastifyRequest, reply: FastifyReply) {

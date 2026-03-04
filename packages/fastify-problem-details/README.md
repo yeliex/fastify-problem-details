@@ -51,6 +51,8 @@ Behavior:
 - returns `application/problem+json` when `Accept` prefers it
 - otherwise returns `application/json`
 - response status always equals `problem.status`
+- in `fastifyErrorHandler`, if `reply.statusCode` is already `>= 400`, it takes precedence and `problem.status` is synchronized to it
+- when the thrown error is already a `ProblemDetail`, its `status` and `title` are preserved
 
 Options (`reply.problem(..., options)` or plugin register options):
 

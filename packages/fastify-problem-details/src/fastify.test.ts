@@ -42,6 +42,20 @@ describe('ProblemDetail and replyProblem', () => {
         assert.strictEqual(pd.detail, 'Not Found');
     });
 
+    test('should prefer error.status over error.statusCode', () => {
+        const err = new Error('err');
+        Object.assign(err, { status: 422, statusCode: 409 });
+        const pd = toProblemDetail(err);
+        assert.strictEqual(pd.status, 422);
+    });
+
+    test('should fallback to 500 for invalid status code values', () => {
+        const err = new Error('err');
+        Object.assign(err, { statusCode: 200 });
+        const pd = toProblemDetail(err);
+        assert.strictEqual(pd.status, 500);
+    });
+
     test('should convert other types to ProblemDetail', () => {
         const pd = toProblemDetail('abc');
         assert.strictEqual(pd.status, 500);
@@ -246,6 +260,149 @@ describe('fastifyErrorHandler', () => {
         assert.strictEqual(response.statusCode, 500);
         assert.strictEqual(json.detail, 'masked');
         assert.strictEqual(json.masked, true);
+
+        await app.close();
+    });
+
+    test('should forward error headers like defaultErrorHandler', async () => {
+        const app = fastify();
+
+        app.setErrorHandler((error: Error, request, reply) => {
+            fastifyErrorHandler.call(app, error, request, reply);
+        });
+
+        app.get('/test', async () => {
+            const error = new Error('Unauthorized') as Error & { statusCode: number; headers: Record<string, string> };
+            error.statusCode = 401;
+            error.headers = {
+                'www-authenticate': 'Bearer realm="example"',
+            };
+            throw error;
+        });
+
+        const response = await app.inject({
+            method: 'GET',
+            url: '/test',
+        });
+
+        assert.strictEqual(response.statusCode, 401);
+        assert.strictEqual(response.headers['www-authenticate'], 'Bearer realm="example"');
+        await app.close();
+    });
+
+    test('should preserve pre-set error status code from reply', async () => {
+        const app = fastify();
+
+        app.setErrorHandler((error: Error, request, reply) => {
+            fastifyErrorHandler.call(app, error, request, reply);
+        });
+
+        app.get('/test', async (_request, reply) => {
+            reply.code(418);
+            throw new Error('Teapot');
+        });
+
+        const response = await app.inject({
+            method: 'GET',
+            url: '/test',
+        });
+
+        assert.strictEqual(response.statusCode, 418);
+        assert.strictEqual(response.json().status, 418);
+        await app.close();
+    });
+
+    test('should keep pre-set reply status over error statusCode', async () => {
+        const app = fastify();
+
+        app.setErrorHandler((error: Error, request, reply) => {
+            fastifyErrorHandler.call(app, error, request, reply);
+        });
+
+        app.get('/test', async (_request, reply) => {
+            reply.code(418);
+            const error = new Error('Unauthorized') as Error & { statusCode: number };
+            error.statusCode = 401;
+            throw error;
+        });
+
+        const response = await app.inject({
+            method: 'GET',
+            url: '/test',
+        });
+
+        assert.strictEqual(response.statusCode, 418);
+        assert.strictEqual(response.json().status, 418);
+        await app.close();
+    });
+
+    test('should not override status and title for thrown ProblemDetail', async () => {
+        const app = fastify();
+
+        app.setErrorHandler((error: Error, request, reply) => {
+            fastifyErrorHandler.call(app, error, request, reply);
+        });
+
+        app.get('/test', async (_request, reply) => {
+            reply.code(418);
+            throw new ProblemDetail(409, 'Business conflict', {
+                title: 'Custom Conflict',
+            });
+        });
+
+        const response = await app.inject({
+            method: 'GET',
+            url: '/test',
+        });
+
+        const json = response.json();
+        assert.strictEqual(response.statusCode, 409);
+        assert.strictEqual(json.status, 409);
+        assert.strictEqual(json.title, 'Custom Conflict');
+        assert.strictEqual(json.detail, 'Business conflict');
+
+        await app.close();
+    });
+
+    test('should skip logging when disableRequestLogging is true', async () => {
+        const app = fastify({
+            logger: true,
+            disableRequestLogging: true,
+        });
+
+        let infoCalls = 0;
+        let errorCalls = 0;
+
+        app.setErrorHandler((error: Error, request, reply) => {
+            const rawInfo = reply.log.info.bind(reply.log) as (...args: any[]) => unknown;
+            const rawError = reply.log.error.bind(reply.log) as (...args: any[]) => unknown;
+
+            reply.log.info = ((...args: any[]) => {
+                infoCalls += 1;
+                return rawInfo(...args);
+            }) as typeof reply.log.info;
+            reply.log.error = ((...args: any[]) => {
+                errorCalls += 1;
+                return rawError(...args);
+            }) as typeof reply.log.error;
+
+            fastifyErrorHandler.call(app, error, request, reply);
+        });
+
+        app.get('/test', async () => {
+            const error = new Error('Bad Request') as Error & { statusCode: number };
+            error.statusCode = 400;
+            throw error;
+        });
+
+        const response = await app.inject({
+            method: 'GET',
+            url: '/test',
+        });
+
+        assert.strictEqual(response.statusCode, 400);
+        assert.strictEqual(infoCalls, 0);
+        assert.strictEqual(errorCalls, 0);
 
         await app.close();
     });

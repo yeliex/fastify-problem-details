@@ -9,7 +9,7 @@ export interface ProblemDetailJSON {
 }
 
 export interface ProblemDetailExtend {
-    [key: string]: unknown;
+    [key: string | symbol]: unknown;
 }
 
 export type ProblemDetailInit =
@@ -24,7 +24,7 @@ export class ProblemDetail extends Error implements ProblemDetailJSON, ProblemDe
     public detail?: string;
     public instance?: string;
 
-    [key: string]: unknown;
+    [key: string | symbol]: unknown;
 
     constructor(status: number, options?: ProblemDetailInit)
     constructor(status: number, detail?: string, options?: ProblemDetailInit)
@@ -47,10 +47,18 @@ export class ProblemDetail extends Error implements ProblemDetailJSON, ProblemDe
         this.instance = options?.instance;
 
         if (options) {
-            for (const key of Object.keys(options || {})) {
-                if (!['type', 'title', 'status', 'detail', 'instance', 'cause'].includes(key)
-                    && options[key] !== undefined) {
-                    this[key] = options![key];
+            for (const key of Reflect.ownKeys(options)) {
+                if (typeof key === 'string') {
+                    if (!['type', 'title', 'status', 'detail', 'instance', 'cause'].includes(key)
+                        && options[key] !== undefined) {
+                        this[key] = options[key];
+                    }
+                    continue;
+                }
+
+                const value = options[key];
+                if (value !== undefined) {
+                    this[key] = value;
                 }
             }
         }

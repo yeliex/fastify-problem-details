@@ -52,6 +52,42 @@ Behavior:
 - otherwise returns `application/json`
 - response status always equals `problem.status`
 
+Options (`reply.problem(..., options)` or plugin register options):
+
+- `responseStack?: boolean` include `stack` in response payload when `true`
+- `responseFilter?: (input: unknown) => unknown` post-process outgoing problem payload before `send`
+
+Example:
+
+```ts
+import { httpErrors } from '@yeliex/fastify-problem-details';
+
+const PROBLEM_PRIVATE = Symbol.for('private');
+
+await app.register(fastifyProblemDetails, {
+  responseFilter: (input) => {
+    const {
+      [PROBLEM_PRIVATE]: privateData,
+      ...rest
+    } = input as Record<string | symbol, unknown>;
+
+    // keep internal context for logs/tracing, but never expose it directly
+    return {
+      ...rest,
+      traceId: (privateData as { traceId?: string } | undefined)?.traceId,
+    };
+  },
+});
+
+app.get('/users/:id', async (_request, reply) => {
+  const error = new httpErrors.BadRequest('something went wrong', {
+    [PROBLEM_PRIVATE]: { traceId: 'req-123' },
+  });
+
+  return reply.problem(error);
+});
+```
+
 ## `httpErrors`
 
 Built-in typed HTTP error constructors (re-exported from `@yeliex/problem-details/http-error`).

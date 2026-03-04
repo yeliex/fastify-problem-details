@@ -27,6 +27,7 @@ class ProblemDetail extends Error {
   - `instance`
   - `cause`
   - any custom extension members (for example `traceId`, `code`, `foo`)
+  - supports `Symbol` extension members for internal-only metadata
   - extension members with `undefined` value are ignored in instance assignment
 
 ## Usage

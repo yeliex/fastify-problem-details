@@ -85,6 +85,20 @@ describe('ProblemDetail', () => {
         assert.strictEqual(pd.toJSON().reason, 'missing');
     });
 
+    test('should support symbol extension fields without exposing in toJSON', () => {
+        const PROBLEM_PRIVATE = Symbol.for('private');
+        const pd = new ProblemDetail(400, 'Bad Request', {
+            [PROBLEM_PRIVATE]: { traceId: 'req-1' },
+            code: 'BAD_REQUEST',
+        });
+
+        assert.deepStrictEqual(pd[PROBLEM_PRIVATE], { traceId: 'req-1' });
+
+        const json = pd.toJSON();
+        assert.strictEqual(json.code, 'BAD_REQUEST');
+        assert.strictEqual(Object.getOwnPropertySymbols(json).length, 0);
+    });
+
 });
 
 describe('ProblemDetail edge cases', () => {

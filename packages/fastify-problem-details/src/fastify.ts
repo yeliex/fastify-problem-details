@@ -28,6 +28,7 @@ declare module 'fastify' {
 
 type ReplyProblemOptions = {
     responseStack?: boolean;
+    responseFilter?: (input: unknown) => unknown;
 };
 
 type ReplyProblem = {
@@ -63,7 +64,7 @@ export const acceptsProblemJson = (request: FastifyRequest) => {
 
 export const replyProblem: ReplyProblem = function (reply, ...args: any[]) {
     const options = args[args.length - 1];
-    const responseStack = typeof options === 'object' && options.responseStack === true;
+    const { responseStack, responseFilter } = typeof options === 'object' ? options : {};
 
     const problem = args[0] instanceof ProblemDetail ? args[0] : new ProblemDetail(args[0], args[1], args[2]);
 
@@ -74,8 +75,18 @@ export const replyProblem: ReplyProblem = function (reply, ...args: any[]) {
     }
 
     const json = problem.toJSON();
-    if (responseStack) {
+
+    if (responseStack === true) {
         json.stack = problem.stack;
+    }
+
+    if (typeof responseFilter === 'function') {
+        const filterInput: Record<string | symbol, unknown> = { ...json };
+        for (const key of Object.getOwnPropertySymbols(problem)) {
+            filterInput[key] = problem[key];
+        }
+
+        return reply.status(problem.status).send(responseFilter(filterInput));
     }
 
     return reply.status(problem.status).send(json);
@@ -112,11 +123,11 @@ export function fastifyErrorHandler(
     error: Error,
     _request: FastifyRequest,
     reply: FastifyReply,
-    { responseStack }: ReplyProblemOptions = {},
+    options: ReplyProblemOptions = {},
 ) {
     const problem = toProblemDetail(error);
 
-    return replyProblem(reply, problem, { responseStack });
+    return replyProblem(reply, problem, options);
 }
 
 export function fastifyNotFoundHandler(this: FastifyInstance, request: FastifyRequest, reply: FastifyReply) {
@@ -131,7 +142,7 @@ export function fastifyNotFoundHandler(this: FastifyInstance, request: FastifyRe
 
 export const fastifyProblemDetails: FastifyPluginCallback<ReplyProblemOptions> = fastifyPlugin((
     fastify: FastifyInstance,
-    { responseStack }: ReplyProblemOptions = {},
+    options: ReplyProblemOptions = {},
 ) => {
     fastify.decorate('httpErrors', httpErrors);
 
@@ -146,7 +157,7 @@ export const fastifyProblemDetails: FastifyPluginCallback<ReplyProblemOptions> =
     });
 
     fastify.setErrorHandler(function (error, request, reply) {
-        return fastifyErrorHandler.call(this, error as Error, request, reply, { responseStack });
+        return fastifyErrorHandler.call(this, error as Error, request, reply, options);
     });
 
     fastify.setNotFoundHandler(fastifyNotFoundHandler);

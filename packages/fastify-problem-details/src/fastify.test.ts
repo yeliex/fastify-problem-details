@@ -91,6 +91,49 @@ describe('ProblemDetail and replyProblem', () => {
         await app.close();
     });
 
+    test('should apply responseFilter when provided', async () => {
+        const app = fastify();
+        app.register(fastifyProblemDetails);
+        const PROBLEM_PRIVATE = Symbol.for('private');
+
+        app.get('/test', async (_request, reply) => {
+            const problem = new ProblemDetail(500, 'Internal Server Error', {
+                [PROBLEM_PRIVATE]: {
+                    traceId: 't-1',
+                },
+            });
+            replyProblem(reply, problem, {
+                responseStack: true,
+                responseFilter: (input) => {
+                    const {
+                        stack,
+                        [PROBLEM_PRIVATE]: privateData,
+                        ...rest
+                    } = input as Record<string | symbol, unknown>;
+
+                    return {
+                        ...rest,
+                        filtered: true,
+                        traceId: (privateData as { traceId: string }).traceId,
+                    };
+                },
+            });
+        });
+
+        const response = await app.inject({
+            method: 'GET',
+            url: '/test',
+        });
+
+        const json = response.json();
+        assert.strictEqual(response.statusCode, 500);
+        assert.strictEqual(json.filtered, true);
+        assert.strictEqual(json.traceId, 't-1');
+        assert.strictEqual(json.stack, undefined);
+
+        await app.close();
+    });
+
     test('should set application/problem+json type when acceptsProblemJson is true', async () => {
         const app = fastify();
         app.get('/test', async (_req, reply) => {
@@ -173,6 +216,36 @@ describe('fastifyErrorHandler', () => {
         const json = response.json();
         assert.strictEqual(response.statusCode, 500);
         assert.strictEqual(json.stack, undefined);
+
+        await app.close();
+    });
+
+    test('should apply responseFilter when provided', async () => {
+        const app = fastify();
+
+        app.setErrorHandler((error: Error, request, reply) => {
+            fastifyErrorHandler.call(app, error, request, reply, {
+                responseFilter: (input) => ({
+                    ...(input as Record<string, unknown>),
+                    detail: 'masked',
+                    masked: true,
+                }),
+            });
+        });
+
+        app.get('/test', async () => {
+            throw new Error('Test Error');
+        });
+
+        const response = await app.inject({
+            method: 'GET',
+            url: '/test',
+        });
+
+        const json = response.json();
+        assert.strictEqual(response.statusCode, 500);
+        assert.strictEqual(json.detail, 'masked');
+        assert.strictEqual(json.masked, true);
 
         await app.close();
     });
@@ -387,6 +460,40 @@ describe('fastifyProblemDetails plugin', () => {
         const json = res.json();
         assert.strictEqual(res.statusCode, 500);
         assert.strictEqual(json.stack, undefined);
+
+        await app.close();
+    });
+
+    test('should apply responseFilter from plugin options', async () => {
+        const app = fastify();
+        await app.register(fastifyProblemDetails, {
+            responseFilter: (input) => {
+                const { detail, ...rest } = input as Record<string, unknown>;
+                return {
+                    ...rest,
+                    detail: 'redacted',
+                    source: 'plugin-filter',
+                };
+            },
+        });
+
+        app.get('/error', async () => {
+            throw new Error('Test error');
+        });
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/error',
+        });
+
+        assert.strictEqual(res.statusCode, 500);
+        assert.deepStrictEqual(res.json(), {
+            type: 'about:blank',
+            title: 'Internal Server Error',
+            status: 500,
+            detail: 'redacted',
+            source: 'plugin-filter',
+        });
 
         await app.close();
     });

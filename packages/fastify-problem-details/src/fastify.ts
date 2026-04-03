@@ -170,9 +170,10 @@ export function fastifyErrorHandler(
 }
 
 export function fastifyNotFoundHandler(this: FastifyInstance, request: FastifyRequest, reply: FastifyReply) {
-    const problem = new ProblemDetail(404, `Route ${request.method}:${request.url} not found`, {
+    const url = new URL(request.url, 'http://localhost');
+    const problem = new ProblemDetail(404, `Route ${request.method}:${url.pathname} not found`, {
         type: 'about:blank',
-        instance: request.url,
+        instance: url.pathname,
         method: request.method,
     });
 

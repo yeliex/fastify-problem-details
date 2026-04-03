@@ -430,6 +430,28 @@ describe('fastifyNotFoundHandler', () => {
         });
         await app.close();
     });
+
+    test('should exclude query string from not found route detail and instance', async () => {
+        const app = fastify();
+
+        app.setNotFoundHandler(fastifyNotFoundHandler);
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/non-existent-route?foo=bar',
+        });
+
+        assert.strictEqual(res.statusCode, 404);
+        assert.deepStrictEqual(res.json(), {
+            type: 'about:blank',
+            title: 'Not Found',
+            status: 404,
+            detail: 'Route GET:/non-existent-route not found',
+            instance: '/non-existent-route',
+            method: 'GET',
+        });
+        await app.close();
+    });
 });
 
 describe('FastifyError handling', () => {
@@ -662,6 +684,28 @@ describe('fastifyProblemDetails plugin', () => {
         const res = await app.inject({
             method: 'GET',
             url: '/non-existent-route',
+        });
+
+        assert.strictEqual(res.statusCode, 404);
+        assert.deepStrictEqual(res.json(), {
+            type: 'about:blank',
+            title: 'Not Found',
+            status: 404,
+            detail: 'Route GET:/non-existent-route not found',
+            instance: '/non-existent-route',
+            method: 'GET',
+        });
+
+        await app.close();
+    });
+
+    test('should exclude query string from plugin not found response', async () => {
+        const app = fastify();
+        await app.register(fastifyProblemDetails);
+
+        const res = await app.inject({
+            method: 'GET',
+            url: '/non-existent-route?foo=bar',
         });
 
         assert.strictEqual(res.statusCode, 404);

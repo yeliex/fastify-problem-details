@@ -1,5 +1,11 @@
 # @yeliex/fastify-problem-details
 
+## 1.4.2
+
+### Patch Changes
+
+- 880785c: Exclude query strings from Fastify not found problem detail messages and instance paths.
+
 ## 1.4.1
 
 ### Patch Changes

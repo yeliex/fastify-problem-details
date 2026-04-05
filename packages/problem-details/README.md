@@ -54,11 +54,46 @@ which is useful in logs and debugging.
 `http-error` is provided as a subpath export (not from root entry):
 
 ```ts
-import { httpErrors } from '@yeliex/problem-details/http-error';
+import { createError, createHttpError, httpErrors } from '@yeliex/problem-details/http-error';
 
 throw new httpErrors.NotFound('User not found');
 throw new httpErrors[404]('User not found');
 throw new httpErrors['404']('User not found');
+
+const ValidationError = createError(400, 'ValidationError', {
+  title: 'Validation Failed',
+  type: 'https://example.com/problems/validation-error',
+  code: 'VALIDATION_ERROR',
+});
+
+const ConflictError = createHttpError(409, 'Conflict detected', {
+  title: 'Business Conflict',
+  code: 'BUSINESS_CONFLICT',
+});
+```
+
+`createError` overloads:
+
+```ts
+createError(status: number, name: string)
+createError(status: number, name: string, defaultOptions?: ProblemDetailInit)
+createError(status: number, name: string, defaultDetail?: string, defaultOptions?: ProblemDetailInit)
+```
+
+`createHttpError` uses the same default argument model without the explicit `name` parameter.
+
+Default options are applied first, and instance-time arguments override them:
+
+```ts
+const ValidationError = createError(400, 'ValidationError', {
+  title: 'Validation Failed',
+  type: 'https://example.com/problems/validation-error',
+  code: 'VALIDATION_ERROR',
+});
+
+new ValidationError({ field: 'email' });
+new ValidationError('Email is invalid', { field: 'email' });
+new ValidationError(undefined, { title: 'Invalid Request' });
 ```
 
 ## JSON Output

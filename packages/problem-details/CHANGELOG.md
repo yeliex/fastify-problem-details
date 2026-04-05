@@ -1,5 +1,11 @@
 # @yeliex/problem-details
 
+## 1.4.1
+
+### Patch Changes
+
+- 76c2701: Add support for passing default options to `createError` and `createHttpError` while preserving legacy default detail strings.
+
 ## 1.4.0
 
 ### Minor Changes

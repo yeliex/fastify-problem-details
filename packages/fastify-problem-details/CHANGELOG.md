@@ -1,5 +1,13 @@
 # @yeliex/fastify-problem-details
 
+## 1.4.3
+
+### Patch Changes
+
+- 1c98899: Consolidate duplicate http-error tests by keeping Fastify integration coverage in the Fastify package tests.
+- Updated dependencies [76c2701]
+  - @yeliex/problem-details@1.4.1
+
 ## 1.4.2
 
 ### Patch Changes

@@ -10,6 +10,7 @@ import {
     toProblemDetail,
 } from './fastify.js';
 import { ProblemDetail } from '@yeliex/problem-details';
+import { createError, httpErrors } from '@yeliex/problem-details/http-error';
 
 describe('ProblemDetail and replyProblem', () => {
     test('should convert FastifyError to ProblemDetail', () => {
@@ -168,6 +169,45 @@ describe('ProblemDetail and replyProblem', () => {
 
         const res = await app.inject({ method: 'GET', url: '/test' });
         assert.strictEqual(res.headers['content-type'], 'application/json; charset=utf-8');
+    });
+});
+
+describe('httpErrors integration', () => {
+    test('should send a custom error created by createError', async () => {
+        const app = fastify();
+        const CustomError = createError(499, 'CustomError', 'custom detail');
+
+        app.get('/err', (_req, reply) => {
+            const err = new CustomError('custom detail', { foo: 'bar' });
+            reply.code(499).send(err.toJSON());
+        });
+
+        const res = await app.inject({ method: 'GET', url: '/err' });
+        const body = res.json();
+
+        assert.strictEqual(res.statusCode, 499);
+        assert.strictEqual(body.detail, 'custom detail');
+        assert.strictEqual(body.foo, 'bar');
+
+        await app.close();
+    });
+
+    test('should send standard httpErrors instances', async () => {
+        const app = fastify();
+
+        app.get('/std', (_req, reply) => {
+            const err = new httpErrors.NotFound('not found', { foo: 'bar' });
+            reply.code(404).send(err.toJSON());
+        });
+
+        const res = await app.inject({ method: 'GET', url: '/std' });
+        const body = res.json();
+
+        assert.strictEqual(res.statusCode, 404);
+        assert.strictEqual(body.detail, 'not found');
+        assert.strictEqual(body.foo, 'bar');
+
+        await app.close();
     });
 });
 

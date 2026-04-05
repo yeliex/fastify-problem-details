@@ -45,15 +45,45 @@ export const httpErrorNames = {
     511: 'NetworkAuthenticationRequired',
 } as const;
 
-export const createError = (status: number, name: string, detail?: string) => {
+type ErrorConstructor = {
+    new(options?: ProblemDetailInit): ProblemDetailClass;
+    new(detail?: string, options?: ProblemDetailInit): ProblemDetailClass;
+};
+
+export function createError(status: number, name: string): ErrorConstructor;
+export function createError(status: number, name: string, defaultOptions?: ProblemDetailInit): ErrorConstructor;
+export function createError(
+    status: number,
+    name: string,
+    defaultDetail?: string,
+    defaultOptions?: ProblemDetailInit,
+): ErrorConstructor;
+export function createError(
+    status: number,
+    name: string,
+    defaultDetailOrOptions?: string | ProblemDetailInit,
+    defaultOptions?: ProblemDetailInit,
+) {
+    const defaultDetail = typeof defaultDetailOrOptions === 'string' ? defaultDetailOrOptions : undefined;
+    const normalizedDefaultOptions =
+        typeof defaultDetailOrOptions === 'string'
+            ? defaultOptions
+            : defaultOptions ?? defaultDetailOrOptions;
+
     const ProblemDetail = class extends ProblemDetailClass {
         constructor(options?: ProblemDetailInit)
         constructor(detail?: string, options?: ProblemDetailInit)
         constructor(detailOrOptions?: string | ProblemDetailInit, options?: ProblemDetailInit) {
             if (typeof detailOrOptions === 'string') {
-                super(status, detailOrOptions, options);
+                super(status, detailOrOptions, { ...normalizedDefaultOptions, ...options });
             } else {
-                super(status, detail || STATUS_CODES[status], detailOrOptions);
+                const resolvedOptions = { ...normalizedDefaultOptions, ...detailOrOptions };
+
+                if (defaultDetail !== undefined) {
+                    super(status, defaultDetail, resolvedOptions);
+                } else {
+                    super(status, resolvedOptions);
+                }
             }
 
             this.name = name;
@@ -62,17 +92,37 @@ export const createError = (status: number, name: string, detail?: string) => {
 
     Object.defineProperty(ProblemDetail, 'name', { value: name });
 
-    return ProblemDetail;
-};
+    return ProblemDetail as ErrorConstructor;
+}
 
-export const createHttpError = (status: keyof typeof httpErrorNames, detail?: string) => {
+export function createHttpError(status: keyof typeof httpErrorNames): ErrorConstructor;
+export function createHttpError(
+    status: keyof typeof httpErrorNames,
+    defaultOptions?: ProblemDetailInit,
+): ErrorConstructor;
+export function createHttpError(
+    status: keyof typeof httpErrorNames,
+    defaultDetail?: string,
+    defaultOptions?: ProblemDetailInit,
+): ErrorConstructor;
+export function createHttpError(
+    status: keyof typeof httpErrorNames,
+    defaultDetailOrOptions?: string | ProblemDetailInit,
+    defaultOptions?: ProblemDetailInit,
+) {
     const name = httpErrorNames[status] || 'HttpError';
-    return createError(status, name, detail);
-};
+    const defaultDetail = typeof defaultDetailOrOptions === 'string' ? defaultDetailOrOptions : undefined;
+    const normalizedDefaultOptions =
+        typeof defaultDetailOrOptions === 'string'
+            ? defaultOptions
+            : defaultOptions ?? defaultDetailOrOptions;
+
+    return createError(status, name, defaultDetail, normalizedDefaultOptions);
+}
 
 type HttpErrorStatusCode = keyof typeof httpErrorNames;
 type HttpErrorName = (typeof httpErrorNames)[HttpErrorStatusCode];
-type HttpErrorConstructor = ReturnType<typeof createHttpError>;
+type HttpErrorConstructor = ErrorConstructor;
 
 export type HttpErrors = {
     [status in HttpErrorStatusCode]: HttpErrorConstructor;
@@ -86,7 +136,7 @@ export const httpErrors = (Object.keys(httpErrorNames) as Array<`${HttpErrorStat
     .reduce((result, statusCode) => {
         const status = Number(statusCode) as HttpErrorStatusCode;
         const name = httpErrorNames[status];
-        const ErrorClass = createHttpError(status, STATUS_CODES[status]);
+        const ErrorClass = createHttpError(status, { title: STATUS_CODES[status] });
 
         result[name] = ErrorClass;
         result[status] = ErrorClass;

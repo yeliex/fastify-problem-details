@@ -1,7 +1,7 @@
 import assert from 'node:assert';
-import { STATUS_CODES } from 'node:http';
 import { describe, test } from 'node:test';
 import { createError, createHttpError, httpErrorNames, httpErrors } from './http-error.js';
+import { STATUS_CODES } from './utils.js';
 
 describe('createError', () => {
     test('should extend ProblemDetail and assign properties', () => {
@@ -152,6 +152,8 @@ describe('httpErrors', () => {
 
     Object.keys(STATUS_CODES).forEach((statusCode) => {
         const status = +statusCode;
+        const statusKey = statusCode as keyof typeof STATUS_CODES;
+
         if (status < 400) {
             return;
         }
@@ -165,7 +167,7 @@ describe('httpErrors', () => {
 
             const err = new ErrorClass('Test detail', { extra: 'info' });
             assert.strictEqual(err.status, status);
-            assert.strictEqual(err.title, STATUS_CODES[status]);
+            assert.strictEqual(err.title, STATUS_CODES[statusKey]);
             assert.strictEqual(err.detail, 'Test detail');
             assert.strictEqual(err.extra, 'info');
         });

@@ -1,5 +1,5 @@
-import { STATUS_CODES } from 'node:http';
 import { ProblemDetail as ProblemDetailClass, type ProblemDetailInit } from './problem-detail.js';
+import { STATUS_CODES } from './utils.js';
 
 export const httpErrorNames = {
     400: 'BadRequest',
@@ -136,7 +136,7 @@ export const httpErrors = (Object.keys(httpErrorNames) as Array<`${HttpErrorStat
     .reduce((result, statusCode) => {
         const status = Number(statusCode) as HttpErrorStatusCode;
         const name = httpErrorNames[status];
-        const ErrorClass = createHttpError(status, { title: STATUS_CODES[status] });
+        const ErrorClass = createHttpError(status, { title: STATUS_CODES[status] || 'Unknown Error' });
 
         result[name] = ErrorClass;
         result[status] = ErrorClass;

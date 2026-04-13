@@ -1,11 +1,15 @@
 import assert from 'node:assert';
 import { describe, test } from 'node:test';
-import { inspect } from 'node:util';
+import * as NodeUtil from 'node:util';
 import { ProblemDetail } from './problem-detail.js';
 
 describe('ProblemDetail', () => {
     test('should assign all properties from constructor', () => {
-        const pd = new ProblemDetail(404, 'Not found', { type: 'custom:type', title: 'Custom Title', instance: '/foo', foo: 123 });
+        const pd = new ProblemDetail(
+            404,
+            'Not found',
+            { type: 'custom:type', title: 'Custom Title', instance: '/foo', foo: 123 },
+        );
         assert.strictEqual(pd.status, 404);
         assert.strictEqual(pd.detail, 'Not found');
         assert.strictEqual(pd.type, 'custom:type');
@@ -71,7 +75,7 @@ describe('ProblemDetail', () => {
     test('inspect should reuse custom toString output', () => {
         const pd = new ProblemDetail(400, 'Bad Request', { field: 'name' });
 
-        assert.strictEqual(inspect(pd), pd.toString());
+        assert.strictEqual(NodeUtil.inspect(pd), pd.toString());
     });
 
     test('should skip undefined custom fields', () => {

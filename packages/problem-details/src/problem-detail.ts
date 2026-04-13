@@ -1,4 +1,4 @@
-import { STATUS_CODES } from 'node:http';
+import { STATUS_CODES } from './utils.js';
 
 export interface ProblemDetailJSON {
     type: string;
@@ -43,7 +43,7 @@ export class ProblemDetail extends Error implements ProblemDetailJSON, ProblemDe
         this.name = 'ProblemDetail';
         this.status = status;
         this.type = options?.type || 'about:blank';
-        this.title = options?.title || STATUS_CODES[status] || 'Unknown Error';
+        this.title = options?.title || STATUS_CODES[`${status}` as keyof typeof STATUS_CODES] || 'Unknown Error';
         this.instance = options?.instance;
 
         if (options) {
